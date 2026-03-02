@@ -9,11 +9,34 @@ function ViewSeating() {
   const [subjects, setSubjects] = useState([]);
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedSubjectObj, setSelectedSubjectObj] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', type: 'success' });
 
   const showSnackbar = (message, type = 'success') => {
     setSnackbar({ open: true, message, type });
     setTimeout(() => setSnackbar({ open: false, message: '', type: 'success' }), 3000);
+  };
+
+  const formatDate = (s) => {
+    if (!s) return 'N/A';
+    try {
+      const d = new Date(s);
+      if (isNaN(d)) return s;
+      return d.toLocaleDateString();
+    } catch (e) {
+      return s;
+    }
+  };
+
+  const formatTime = (s) => {
+    if (!s) return 'N/A';
+    try {
+      const d = new Date(s);
+      if (isNaN(d)) return s;
+      return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit'});
+    } catch (e) {
+      return s;
+    }
   };
 
   useEffect(() => {
@@ -34,6 +57,11 @@ function ViewSeating() {
     };
     load();
   }, [selectedDept]);
+
+  useEffect(() => {
+    const sub = subjects.find(s => String(s.id) === String(selectedSubject));
+    setSelectedSubjectObj(sub || null);
+  }, [subjects, selectedSubject]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -205,6 +233,8 @@ function ViewSeating() {
                     <div className="info-item"><span className="info-label">Department</span><div className="info-value">{a.classroom_dept_name||'N/A'}</div></div>
                     <div className="info-item"><span className="info-label">Capacity</span><div className="info-value">{a.classroom_capacity}</div></div>
                     <div className="info-item"><span className="info-label">Assigned</span><div className="info-value">{a.students_count}</div></div>
+                    <div className="info-item"><span className="info-label">Exam Date</span><div className="info-value">{selectedSubjectObj?.exam_date ? formatDate(selectedSubjectObj.exam_date) : (a.exam_date ? formatDate(a.exam_date) : (a.exam_datetime ? formatDate(a.exam_datetime) : 'N/A'))}</div></div>
+                    <div className="info-item"><span className="info-label">Exam Time</span><div className="info-value">{selectedSubjectObj?.exam_time ? formatTime(selectedSubjectObj.exam_time) : (a.exam_time ? formatTime(a.exam_time) : (a.exam_datetime ? formatTime(a.exam_datetime) : 'N/A'))}</div></div>
                   </div>
 
                   {a.supervisors_detail?.length>0&&(
