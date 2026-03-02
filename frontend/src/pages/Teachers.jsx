@@ -1,0 +1,255 @@
+import React, { useState, useEffect, useContext } from 'react';
+import { api } from '../services/api';
+import { useUI } from '../context/UIContext';
+import { AuthContext } from '../context/AuthContext';
+import ConfirmDialog from '../components/ConfirmDialog';
+
+function Teachers() {
+  const [teachers, setTeachers] = useState([]);
+  const { user } = useContext(AuthContext);
+  const [name, setName] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
+  const [department, setDepartment] = useState('');
+  const [editingTeacher, setEditingTeacher] = useState(null);
+  const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { showSnackbar } = useUI();
+  const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const openConfirm = (title, message, onConfirm) => setConfirmState({ open: true, title, message, onConfirm });
+  const closeConfirm = () => setConfirmState({ open: false, title: '', message: '', onConfirm: null });
+  const [expandedDept, setExpandedDept] = useState({});
+
+  const toggleDept = (id) => setExpandedDept(prev => ({ ...prev, [id]: !prev[id] }));
+  const resetForm = () => { setEditingTeacher(null); setName(''); setEmployeeId(''); setDepartment(''); setError(''); };
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [teaResp, deptData] = await Promise.all([api.getTeachers(100, 0), api.getDepartments()]);
+        const teachers = teaResp.results || (Array.isArray(teaResp) ? teaResp : []);
+        setTeachers(teachers); setDepartments(deptData);
+      } catch (e) { const msg = e.message || 'Load failed'; setError(msg); showSnackbar(msg, { type: 'error' }); }
+      setLoading(false);
+    };
+    load();
+  }, [showSnackbar]);
+
+  const addTeacher = async (e) => {
+    e.preventDefault();
+    if (!name || name.trim().length < 2) { const m = 'Teacher name must be at least 2 characters'; setError(m); showSnackbar(m, { type: 'error' }); return; }
+    if (!employeeId || employeeId.trim().length < 1) { const m = 'Employee ID is required'; setError(m); showSnackbar(m, { type: 'error' }); return; }
+    if (!department) { const m = 'Please select a department'; setError(m); showSnackbar(m, { type: 'error' }); return; }
+    if (teachers.some(t => t.employee_id && t.employee_id.toLowerCase() === employeeId.trim().toLowerCase() && (!editingTeacher || t.id !== editingTeacher.id))) {
+      const m = 'Employee ID must be unique'; setError(m); showSnackbar(m, { type: 'error' }); return;
+    }
+    try {
+      if (editingTeacher) {
+        const updated = await api.updateTeacher(editingTeacher.id, { name, employee_id: employeeId, department });
+        setTeachers(teachers.map(t => t.id === editingTeacher.id ? updated : t));
+        showSnackbar('Teacher updated', { type: 'success' }); resetForm();
+      } else {
+        const newT = await api.createTeacher({ name, employee_id: employeeId, department });
+        setTeachers([...teachers, newT]);
+        showSnackbar('Teacher added', { type: 'success' }); resetForm();
+      }
+    } catch (e) { const msg = e.message || 'Add failed'; setError(msg); showSnackbar(msg, { type: 'error' }); }
+  };
+
+  const deleteTeacher = (t) => {
+    openConfirm(
+      'Delete Teacher',
+      `Are you sure you want to delete teacher "${t.name}"? This action cannot be undone.`,
+      async () => {
+        closeConfirm();
+        try { await api.deleteTeacher(t.id); setTeachers(teachers.filter(x => x.id !== t.id)); showSnackbar('Deleted', { type: 'success' }); }
+        catch (err) { showSnackbar(err?.message || 'Delete failed', { type: 'error' }); }
+      }
+    );
+  };
+
+  const CSS = `
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{--bg:#F5F6FA;--white:#FFFFFF;--border:#E2E5EC;--border-focus:#1A56DB;--text-primary:#111827;--text-secondary:#6B7280;--text-label:#374151;--accent:#1A56DB;--accent-hover:#1646C0;--error-bg:#FEF2F2;--error-border:#FECACA;--error-text:#B91C1C;}
+    html,body,#root{font-family:'Inter',sans-serif;}
+    .pg{min-height:100vh;background:var(--bg);padding:32px 28px;font-family:'Inter',sans-serif;}
+    .pg-header{margin-bottom:28px;} .pg-header h1{font-size:22px;font-weight:600;color:var(--text-primary);letter-spacing:-0.02em;margin-bottom:4px;} .pg-header p{font-size:14px;color:var(--text-secondary);}
+    .summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;}
+    .chip{display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13.5px;color:var(--text-secondary);box-shadow:0 1px 2px rgba(0,0,0,0.04);}
+    .chip strong{color:var(--text-primary);font-weight:600;} .chip-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .card{background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin-bottom:24px;overflow:hidden;}
+    .card-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border);}
+    .card-header h2{font-size:15px;font-weight:600;color:var(--text-primary);}
+    .card-body{padding:20px;}
+    .err-box{display:flex;align-items:flex-start;gap:9px;background:var(--error-bg);border:1px solid var(--error-border);border-radius:8px;padding:11px 14px;font-size:13.5px;color:var(--error-text);line-height:1.45;margin-bottom:18px;}
+    .err-box svg{flex-shrink:0;margin-top:1px;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+    @media(max-width:700px){.form-grid{grid-template-columns:1fr 1fr;}} @media(max-width:460px){.form-grid{grid-template-columns:1fr;}}
+    .f-field{display:flex;flex-direction:column;gap:6px;}
+    .f-label{font-size:13px;font-weight:500;color:var(--text-label);} .f-req{color:var(--error-text);margin-left:2px;}
+    .f-input,.f-select{width:100%;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text-primary);font-family:'Inter',sans-serif;outline:none;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;}
+    .f-input::placeholder{color:#9CA3AF;} .f-input:focus,.f-select:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px rgba(26,86,219,0.1);}
+    .f-input:disabled,.f-select:disabled{background:#F9FAFB;opacity:.6;cursor:not-allowed;}
+    .form-actions{display:flex;gap:10px;margin-top:20px;}
+    .btn-primary{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s;}
+    .btn-primary:hover:not(:disabled){background:var(--accent-hover);} .btn-primary:disabled{opacity:.55;cursor:not-allowed;}
+    .btn-secondary{background:transparent;color:var(--text-label);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s;}
+    .btn-secondary:hover{background:#F9FAFB;}
+    .btn-ghost{padding:5px 10px;background:transparent;color:var(--text-secondary);border:1px solid var(--border);border-radius:6px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:background .12s,color .12s;}
+    .btn-ghost:hover{background:#F3F4F6;color:var(--text-primary);}
+    .btn-danger{padding:5px 10px;background:transparent;color:#DC2626;border:1px solid #FECACA;border-radius:6px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:background .12s;}
+    .btn-danger:hover{background:var(--error-bg);}
+    .dept-block{margin-bottom:28px;} .dept-hd{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+    .dept-name{font-size:14px;font-weight:600;color:var(--text-primary);}
+    .dept-ct{font-size:12px;color:var(--text-secondary);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-weight:500;}
+    .sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+    .sec-header h2{font-size:15px;font-weight:600;color:var(--text-primary);}
+    .ct-chip{font-size:12px;color:var(--text-secondary);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-weight:500;}
+    .tbl-wrap{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
+    table{width:100%;border-collapse:collapse;font-size:14px;}
+    thead tr{background:#F9FAFB;}
+    thead th{padding:10px 16px;text-align:left;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-secondary);border-bottom:1px solid var(--border);}
+    tbody tr{border-bottom:1px solid var(--border);transition:background .12s;} tbody tr:last-child{border-bottom:none;} tbody tr:hover{background:#F9FAFB;}
+    tbody td{padding:12px 16px;color:var(--text-primary);vertical-align:middle;}
+    .td-name{font-weight:500;} .td-mono{font-size:13px;color:var(--text-secondary);font-family:'SF Mono','Fira Code',monospace;}
+    .td-actions{display:flex;gap:6px;align-items:center;}
+    .show-more{margin-top:10px;background:none;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--accent);cursor:pointer;padding:4px 0;}
+    .show-more:hover{opacity:.7;text-decoration:underline;}
+    .empty-state{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:56px 24px;text-align:center;}
+    .empty-icon{width:44px;height:44px;background:var(--bg);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:var(--text-secondary);}
+    .empty-title{font-size:14px;font-weight:500;color:var(--text-primary);margin-bottom:4px;} .empty-sub{font-size:13px;color:var(--text-secondary);}
+    .skeleton{background:linear-gradient(90deg,#F3F4F6 25%,#E9EAEC 50%,#F3F4F6 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:4px;height:13px;}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}} .sk-row td{padding:13px 16px;}
+  `;
+
+  return (
+    <>
+      <style>{CSS}</style>
+      <div className="pg">
+        <div className="pg-header">
+          <h1>Teachers / Invigilators</h1>
+          <p>Manage teacher and invigilator records across departments.</p>
+        </div>
+
+        {!loading && teachers.length > 0 && (
+          <div className="summary">
+            <div className="chip"><div className="chip-dot" style={{ background: '#7C3AED' }} /><span><strong>{teachers.length}</strong> teachers</span></div>
+            <div className="chip"><div className="chip-dot" style={{ background: '#1A56DB' }} /><span><strong>{departments.length}</strong> departments</span></div>
+          </div>
+        )}
+
+        {user?.role === 'ADMIN' && (
+          <div className="card">
+            <div className="card-header"><h2>{editingTeacher ? 'Edit Teacher' : 'Add Teacher / Invigilator'}</h2></div>
+            <div className="card-body">
+              {error && (
+                <div className="err-box" role="alert">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B91C1C" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                  <span>{error}</span>
+                </div>
+              )}
+              <form onSubmit={addTeacher}>
+                <div className="form-grid">
+                  <div className="f-field">
+                    <label className="f-label">Full Name <span className="f-req">*</span></label>
+                    <input className="f-input" value={name} onChange={e => setName(e.target.value)} placeholder="Enter full name" disabled={loading} />
+                  </div>
+                  <div className="f-field">
+                    <label className="f-label">Employee ID <span className="f-req">*</span></label>
+                    <input className="f-input" value={employeeId} onChange={e => setEmployeeId(e.target.value)} placeholder="Enter unique employee ID" disabled={loading} />
+                  </div>
+                  <div className="f-field">
+                    <label className="f-label">Department <span className="f-req">*</span></label>
+                    <select className="f-select" value={department || ''} onChange={e => setDepartment(e.target.value)} disabled={loading}>
+                      <option value="">Select department</option>
+                      {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-actions">
+                  <button type="submit" className="btn-primary" disabled={loading}>
+                    {loading ? (editingTeacher ? 'Updating…' : 'Adding…') : (editingTeacher ? 'Update Teacher' : 'Add Teacher')}
+                  </button>
+                  {editingTeacher && <button type="button" className="btn-secondary" onClick={resetForm}>Cancel</button>}
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="card"><div className="card-body"><div className="tbl-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Employee ID</th></tr></thead>
+              <tbody>{Array.from({ length: 5 }).map((_, i) => (
+                <tr className="sk-row" key={i}>{[160, 90].map((w, j) => <td key={j}><div className="skeleton" style={{ width: w }} /></td>)}</tr>
+              ))}</tbody>
+            </table>
+          </div></div></div>
+        ) : teachers.length > 0 ? (
+          <>
+            <div className="sec-header"><h2>All Teachers</h2><span className="ct-chip">{teachers.length} total</span></div>
+            {departments.map(dept => {
+              const deptTeachers = teachers.filter(t => String(t.department) === String(dept.id));
+              if (deptTeachers.length === 0) return null;
+              const expanded = !!expandedDept[dept.id];
+              const showList = expanded ? deptTeachers : deptTeachers.slice(0, 10);
+              return (
+                <div className="dept-block" key={dept.id}>
+                  <div className="dept-hd"><span className="dept-name">{dept.name}</span><span className="dept-ct">{deptTeachers.length}</span></div>
+                  <div className="tbl-wrap"><table>
+                    <thead><tr><th>Name</th><th>Employee ID</th>{user?.role === 'ADMIN' && <th>Actions</th>}</tr></thead>
+                    <tbody>
+                      {showList.map(t => (
+                        <tr key={t.id}>
+                          <td className="td-name">{t.name}</td>
+                          <td className="td-mono">{t.employee_id}</td>
+                          {user?.role === 'ADMIN' && <td><div className="td-actions">
+                            <button className="btn-ghost" onClick={() => { setEditingTeacher(t); setName(t.name); setEmployeeId(t.employee_id); setDepartment(t.department || ''); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Edit</button>
+                            <button className="btn-danger" onClick={() => deleteTeacher(t)}>Delete</button>
+                          </div></td>}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table></div>
+                  {deptTeachers.length > 10 && <button className="show-more" onClick={() => toggleDept(dept.id)}>{expanded ? 'Show less' : `Show ${deptTeachers.length - 10} more`}</button>}
+                </div>
+              );
+            })}
+            {teachers.filter(t => !t.department).length > 0 && (
+              <div className="dept-block">
+                <div className="dept-hd"><span className="dept-name">Unassigned</span><span className="dept-ct">{teachers.filter(t => !t.department).length}</span></div>
+                <div className="tbl-wrap"><table>
+                  <thead><tr><th>Name</th><th>Employee ID</th>{user?.role === 'ADMIN' && <th>Actions</th>}</tr></thead>
+                  <tbody>{teachers.filter(t => !t.department).map(t => (
+                    <tr key={t.id}>
+                      <td className="td-name">{t.name}</td><td className="td-mono">{t.employee_id}</td>
+                      {user?.role === 'ADMIN' && <td><div className="td-actions"><button className="btn-ghost" onClick={() => { setEditingTeacher(t); setName(t.name); setEmployeeId(t.employee_id); setDepartment(''); }}>Edit</button><button className="btn-danger" onClick={() => deleteTeacher(t)}>Delete</button></div></td>}
+                    </tr>
+                  ))}</tbody>
+                </table></div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="empty-state">
+            <div className="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg></div>
+            <div className="empty-title">No teachers yet</div>
+            <div className="empty-sub">Add your first teacher using the form above.</div>
+          </div>
+        )}
+      </div>
+      <ConfirmDialog
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        onConfirm={confirmState.onConfirm}
+        onCancel={closeConfirm}
+      />
+    </>
+  );
+}
+
+export default Teachers;

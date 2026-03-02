@@ -1,0 +1,62 @@
+# Root-level Git ignore for this project
+
+# Node (frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Frontend build outputs and env
+frontend/node_modules/
+frontend/build/
+frontend/.env
+frontend/.env.*
+
+# Python virtualenvs
+venv/
+.venv/
+server/.venv/
+ENV/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django
+server/db.sqlite3
+server/media/
+server/static/
+local_settings.py
+*.log
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+
+# Distribution
+build/
+dist/
+*.egg-info/
+
+# Editor/IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+
+# Misc
+logs/
+*.bak
