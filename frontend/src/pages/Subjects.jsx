@@ -68,6 +68,14 @@ function Subjects() {
       const m = 'Subject name must be unique';
       setError(m); showSnackbar(m, { type: 'error' }); return;
     }
+    if (!examDate) {
+      const m = 'Exam date is required';
+      setError(m); showSnackbar(m, { type: 'error' }); return;
+    }
+    if (!examTime) {
+      const m = 'Exam time is required';
+      setError(m); showSnackbar(m, { type: 'error' }); return;
+    }
     try {
       if (editingSubject) {
         const updated = await api.updateSubject(editingSubject.id, {
@@ -523,7 +531,7 @@ function Subjects() {
                                       setDepartment(s.department || '');
                                       setExamDate(s.exam_date || '');
                                       setExamTime(s.exam_time || '');
-                                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                                      document.querySelector('.page-content')?.scrollTo({ top: 0, behavior: 'smooth' });
                                     }}
                                   >Edit</button>
                                   <button className="sb-btn-danger" onClick={() => deleteSubject(s)}>Delete</button>

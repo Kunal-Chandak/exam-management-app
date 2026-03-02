@@ -56,7 +56,7 @@ function Departments() {
     } catch (e) { const msg = e.message || 'Add failed'; setError(msg); showSnackbar(msg, { type: 'error' }); }
   };
 
-  const handleEdit = (dept) => { setEditingDept(dept); setName(dept.name || ''); setCode(dept.code || ''); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const handleEdit = (dept) => { setEditingDept(dept); setName(dept.name || ''); setCode(dept.code || ''); document.querySelector('.page-content')?.scrollTo({ top: 0, behavior: 'smooth' }); };
 
   const handleDelete = (dept) => {
     openConfirm(

@@ -207,7 +207,7 @@ function Teachers() {
                           <td className="td-name">{t.name}</td>
                           <td className="td-mono">{t.employee_id}</td>
                           {user?.role === 'ADMIN' && <td><div className="td-actions">
-                            <button className="btn-ghost" onClick={() => { setEditingTeacher(t); setName(t.name); setEmployeeId(t.employee_id); setDepartment(t.department || ''); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Edit</button>
+                            <button className="btn-ghost" onClick={() => { setEditingTeacher(t); setName(t.name); setEmployeeId(t.employee_id); setDepartment(t.department || ''); document.querySelector('.page-content')?.scrollTo({ top: 0, behavior: 'smooth' }); }}>Edit</button>
                             <button className="btn-danger" onClick={() => deleteTeacher(t)}>Delete</button>
                           </div></td>}
                         </tr>
@@ -226,7 +226,7 @@ function Teachers() {
                   <tbody>{teachers.filter(t => !t.department).map(t => (
                     <tr key={t.id}>
                       <td className="td-name">{t.name}</td><td className="td-mono">{t.employee_id}</td>
-                      {user?.role === 'ADMIN' && <td><div className="td-actions"><button className="btn-ghost" onClick={() => { setEditingTeacher(t); setName(t.name); setEmployeeId(t.employee_id); setDepartment(''); }}>Edit</button><button className="btn-danger" onClick={() => deleteTeacher(t)}>Delete</button></div></td>}
+                      {user?.role === 'ADMIN' && <td><div className="td-actions"><button className="btn-ghost" onClick={() => { setEditingTeacher(t); setName(t.name); setEmployeeId(t.employee_id); setDepartment(''); document.querySelector('.page-content')?.scrollTo({ top: 0, behavior: 'smooth' }); }}>Edit</button><button className="btn-danger" onClick={() => deleteTeacher(t)}>Delete</button></div></td>}
                     </tr>
                   ))}</tbody>
                 </table></div>

@@ -250,7 +250,7 @@ function Students() {
                             <td className="td-muted">{subjectLabels(stu.subjects) || '—'}</td>
                             {user?.role === 'ADMIN' && (
                               <td><div className="td-actions">
-                                <button className="btn-ghost" onClick={() => { setEditingStudent(stu); setName(stu.name); setRoll(stu.roll_number); setDepartment(stu.department || ''); setSubjects(stu.subjects || []); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Edit</button>
+                                <button className="btn-ghost" onClick={() => { setEditingStudent(stu); setName(stu.name); setRoll(stu.roll_number); setDepartment(stu.department || ''); setSubjects(stu.subjects || []); document.querySelector('.page-content')?.scrollTo({ top: 0, behavior: 'smooth' }); }}>Edit</button>
                                 <button className="btn-danger" onClick={() => deleteStudent(stu)}>Delete</button>
                               </div></td>
                             )}
@@ -271,7 +271,7 @@ function Students() {
                   <tbody>{students.filter(s => !s.department).map(stu => (
                     <tr key={stu.id}>
                       <td className="td-name">{stu.name}</td><td className="td-mono">{stu.roll_number}</td><td className="td-muted">{subjectLabels(stu.subjects) || '—'}</td>
-                      {user?.role === 'ADMIN' && <td><div className="td-actions"><button className="btn-ghost" onClick={() => { setEditingStudent(stu); setName(stu.name); setRoll(stu.roll_number); setDepartment(''); setSubjects(stu.subjects || []); }}>Edit</button><button className="btn-danger" onClick={() => deleteStudent(stu)}>Delete</button></div></td>}
+                      {user?.role === 'ADMIN' && <td><div className="td-actions"><button className="btn-ghost" onClick={() => { setEditingStudent(stu); setName(stu.name); setRoll(stu.roll_number); setDepartment(''); setSubjects(stu.subjects || []); document.querySelector('.page-content')?.scrollTo({ top: 0, behavior: 'smooth' }); }}>Edit</button><button className="btn-danger" onClick={() => deleteStudent(stu)}>Delete</button></div></td>}
                     </tr>
                   ))}</tbody>
                 </table></div>

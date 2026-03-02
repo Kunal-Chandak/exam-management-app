@@ -580,7 +580,7 @@ function Classrooms() {
                                   <div className="td-actions">
                                     <button
                                       className="cl-btn-ghost"
-                                      onClick={() => { setEditingRoom(r); setRoomNumber(r.room_number); setDepartment(r.department || ''); setCapacity(r.capacity); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                      onClick={() => { setEditingRoom(r); setRoomNumber(r.room_number); setDepartment(r.department || ''); setCapacity(r.capacity); document.querySelector('.page-content')?.scrollTo({ top: 0, behavior: 'smooth' }); }}
                                     >
                                       Edit
                                     </button>

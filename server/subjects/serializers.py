@@ -7,8 +7,8 @@ class SubjectSerializer(serializers.Serializer):
     subject_code = serializers.CharField(max_length=20)
     department = serializers.CharField(required=False, allow_blank=True)
     department_name = serializers.SerializerMethodField()
-    exam_date = serializers.CharField(max_length=10, required=False, allow_blank=True)
-    exam_time = serializers.CharField(max_length=5, required=False, allow_blank=True)
+    exam_date = serializers.CharField(max_length=10, required=True, allow_blank=False)
+    exam_time = serializers.CharField(max_length=5, required=True, allow_blank=False)
 
     def get_department_name(self, obj):
         try:
