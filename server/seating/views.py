@@ -568,6 +568,19 @@ class SeatingViewSet(viewsets.ViewSet):
             
             subject_name = subject.name if hasattr(subject, 'name') else subject.subject_name
             elements.append(Paragraph(f"Seating Arrangement - {subject_name}", title_style))
+            # add exam date/time if available on subject
+            exam_date = getattr(subject, 'exam_date', None) or getattr(subject, 'exam_datetime', None)
+            exam_time = getattr(subject, 'exam_time', None) or None
+            if exam_date or exam_time:
+                date_str = exam_date if exam_date else ''
+                time_str = exam_time if exam_time else ''
+                info = []
+                if date_str:
+                    info.append(f"Date: {date_str}")
+                if time_str:
+                    info.append(f"Time: {time_str}")
+                elements.append(Paragraph(" | ".join(info), styles['Normal']))
+                elements.append(Spacer(1, 0.1*inch))
             elements.append(Spacer(1, 0.2*inch))
             
             for seating in assignments:
